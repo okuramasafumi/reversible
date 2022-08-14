@@ -1,8 +1,6 @@
 # Reversible
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/reversible`. To experiment with that code, run `bin/console` for an interactive prompt.
-
-TODO: Delete this and the text above, and describe your gem
+Provides reversible method definition, inspired by ActiveRecord Migration.
 
 ## Installation
 
@@ -16,7 +14,106 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
 ## Usage
 
-TODO: Write usage instructions here
+### Basic
+
+```ruby
+class Foo
+  include Reversible
+
+  def initialize(id)
+    @id = id
+  end
+
+  reversible do |dir|
+    puts 'Before action'
+    dir.up { puts "Up with id: #{@id}" }
+    dir.down { puts "Down with id: #{@id}" }
+    puts 'After action'
+  end
+end
+```
+
+Now, class `Foo` has two methods: `up` and `down`. With `up` method, only `dir.up` block is executed and `dir.down` block is ignored. It works the same with `down`.
+
+```ruby
+foo = Foo.new(1)
+foo.up
+# Before action
+# Up with id: 1
+# After action
+foo.down
+# Before action
+# Down with id: 1
+# After action
+```
+
+### With arguments
+
+We can call `up` method with any argument. It's passed to the second block parameter.
+
+```ruby
+class Bar
+  include Reversible
+
+  def initialize(data)
+    @data = data
+  end
+
+  reversible :update, :undo_update do |dir, new_data|
+    puts "Before: #{@data}"
+    dir.up do
+      @old_data = @data.dup
+      @data.update(new_data)
+    end
+    dir.down { @data = @old_data.dup }
+    puts "After: #{@data}"
+  end
+end
+
+bar = Bar.new(id: 1)
+bar.update(id: 2)
+# Before: {:id=>1}
+# After: {:id=>2}
+bar.undo_update
+# Before: {:id=>2}
+# After: {:id=>1}
+```
+
+### With block
+
+We can even pass a block to `up` and `down` methods.
+
+```ruby
+class Baz
+  include Reversible
+
+  attr_accessor :count
+
+  def initialize
+    @count = 0
+  end
+
+  reversible do |dir, block|
+    dir.up { puts 'up!' }
+    dir.down { puts 'down!' }
+    block.call
+  end
+end
+
+baz = Baz.new
+baz.up do
+  self.count += 1
+  puts self.count
+end
+# up!
+# 1
+baz.down do
+  self.count -= 1
+  puts self.count
+end
+# down!
+# 0
+```
 
 ## Development
 
