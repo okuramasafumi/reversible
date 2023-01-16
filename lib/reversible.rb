@@ -60,7 +60,7 @@ module Reversible
   module ClassMethods
     # Main method, defines two methods, `up` and `down` by default
     #
-    # @oaram method_names [Array<Symbol, String>] an array of method names to be defined
+    # @param method_names [Array<Symbol, String>] an array of method names to be defined
     # @param &block [Proc] main code called with `up` and `down` methods on base object,
     #   in which `up` and `down` block can be used
     # @yield [dir] Gives direction to the block, `up` or `down`
